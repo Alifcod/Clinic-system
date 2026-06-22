@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>BloomQR Clinic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --accent:#1a6fbf;
+  --accent-light:#e8f1fb;
+  --bg:#f4f6f9;
+  --surface:#fff;
+  --border:#e2e6ec;
+  --text:#1a1c1e;
+  --muted:#6b7280;
+  --red:#dc2626;
+  --green:#16a34a;
+  --green-light:#dcfce7;
+  --orange:#d97706;
+  --orange-light:#fef3c7;
+  --radius:12px;
+  --shadow:0 1px 4px rgba(0,0,0,0.08);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.nav-brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;color:var(--accent);display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
+.nav-brand img{width:28px;height:28px;object-fit:cover;border-radius:6px;}
+.nav-buttons{display:flex;gap:6px;flex-shrink:0;}
+.nav-btn{padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text);white-space:nowrap;}
+.nav-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* CONTAINER */
+.container{max-width:600px;margin:0 auto;padding:20px 16px;}
+.page{display:none;}
+.page.active{display:block;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:12px;}
+
+/* REGISTRATION FORM */
+.page-header{margin-bottom:24px;}
+.page-header h1{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;margin-bottom:6px;}
+.page-header p{color:var(--muted);font-size:14px;}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:5px;color:var(--text);}
+.form-input{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;transition:border-color 0.15s;}
+.form-input:focus{border-color:var(--accent);}
+.form-input.error{border-color:var(--red);}
+.form-select{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
+.btn-primary{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.15s;}
+.btn-primary:hover{opacity:0.9;}
+.btn-secondary{width:100%;padding:12px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;}
+
+/* QUEUE TICKET */
+.ticket{background:var(--surface);border:2px solid var(--accent);border-radius:16px;padding:28px 20px;text-align:center;margin-bottom:16px;}
+.ticket-clinic{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:4px;}
+.ticket-num{font-family:'Space Grotesk',sans-serif;font-size:72px;font-weight:700;color:var(--accent);line-height:1;}
+.ticket-label{font-size:13px;color:var(--muted);margin-top:4px;}
+.ticket-name{font-size:18px;font-weight:700;margin-top:12px;}
+.ticket-detail{font-size:13px;color:var(--muted);margin-top:4px;}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;margin-top:14px;}
+.status-pill.waiting{background:var(--orange-light);color:var(--orange);}
+.status-pill.calling{background:var(--accent-light);color:var(--accent);animation:pulse 1.5s infinite;}
+.status-pill.done{background:var(--green-light);color:var(--green);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+.status-dot{width:8px;height:8px;border-radius:50%;background:currentColor;}
+
+/* QUEUE BOARD */
+.queue-board{margin-bottom:16px;}
+.queue-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin:16px 0 8px;}
+.queue-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.queue-num{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:var(--accent);min-width:40px;}
+.queue-info{flex:1;}
+.queue-patient{font-weight:600;font-size:14px;}
+.queue-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.queue-badge{padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap;}
+.badge-waiting{background:var(--orange-light);color:var(--orange);}
+.badge-calling{background:var(--accent-light);color:var(--accent);}
+.badge-done{background:var(--green-light);color:var(--green);}
+
+/* STAFF VIEW */
+.staff-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+.staff-header h2{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;}
+.now-serving{background:var(--accent);color:#fff;border-radius:16px;padding:24px 20px;text-align:center;margin-bottom:16px;}
+.now-serving-label{font-size:12px;font-weight:600;opacity:0.8;text-transform:uppercase;letter-spacing:0.06em;}
+.now-serving-num{font-family:'Space Grotesk',sans-serif;font-size:64px;font-weight:700;line-height:1;margin:8px 0 4px;}
+.now-serving-name{font-size:16px;font-weight:600;}
+.now-serving-reason{font-size:13px;opacity:0.8;margin-top:4px;}
+.action-row{display:flex;gap:8px;margin-top:14px;}
+.action-btn{flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-done{background:#fff;color:var(--green);}
+.btn-next{background:rgba(255,255,255,0.2);color:#fff;}
+.waiting-list{margin-top:16px;}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;box-shadow:var(--shadow);}
+.stat-val{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:var(--accent);}
+.stat-label{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* OWNER PANEL */
+.tab-bar{display:flex;border-bottom:2px solid var(--border);margin-bottom:20px;gap:0;}
+.tab{padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:inherit;background:none;border-left:none;border-right:none;border-top:none;white-space:nowrap;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* SETTINGS FORM */
+.settings-section{font-size:13px;font-weight:700;color:var(--text);margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.form-row{display:flex;gap:10px;}
+.form-row .form-group{flex:1;}
+.qr-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;}
+.qr-link{font-size:11px;color:var(--muted);word-break:break-all;margin-bottom:10px;}
+
+/* ADMIN */
+.admin-stall-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;}
+.admin-stall-name{font-weight:700;font-size:15px;}
+.admin-stall-meta{font-size:12px;color:var(--muted);margin-top:4px;}
+.admin-tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;margin-right:6px;}
+.tag-active{background:var(--green-light);color:var(--green);}
+.tag-inactive{background:#fee2e2;color:var(--red);}
+.tag-expired{background:#fee2e2;color:var(--red);}
+.tag-clinic{background:var(--accent-light);color:var(--accent);}
+
+/* LANDING */
+.landing{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;}
+.landing-inner{max-width:380px;}
+.landing-icon{font-size:56px;margin-bottom:16px;}
+.landing h1{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;margin-bottom:8px;}
+.landing p{color:var(--muted);font-size:15px;margin-bottom:28px;line-height:1.6;}
+.landing-input{width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:10px;font-size:15px;margin-bottom:10px;font-family:inherit;outline:none;}
+.landing-input:focus{border-color:var(--accent);}
+
+/* CLOSED / INACTIVE */
+.fullscreen-msg{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;}
+.fullscreen-msg-inner h1{font-family:'Space Grotesk',sans-serif;font-size:22px;margin-bottom:8px;}
+.fullscreen-msg-inner p{color:var(--muted);font-size:14px;}
+.fullscreen-msg-inner .icon{font-size:48px;margin-bottom:16px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1c1e;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.2s;}
+.toast.show{opacity:1;}
+
+/* NEW PATIENT BANNER */
+#new-patient-banner{display:none;position:fixed;top:64px;left:50%;transform:translateX(-50%);background:#1a1c1e;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.25);white-space:nowrap;}
+
+/* FOOTER */
+.footer{text-align:center;padding:24px 16px 32px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);margin-top:24px;}
+.footer a{color:var(--muted);text-decoration:none;}
+
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand" id="nav-brand-main">🏥 BloomQR Clinic</div>
+  <div class="nav-buttons">
+    <button class="nav-btn active" id="nav-register" onclick="showPage('page-register')">Register</button>
+    <button class="nav-btn" id="nav-queue" onclick="showPage('page-queue')">Queue</button>
+    <button class="nav-btn" id="nav-staff" onclick="showPage('page-staff')" style="opacity:0.5;font-size:11px;">Staff</button>
+  </div>
+</nav>
+
+<div id="new-patient-banner"></div>
+<div class="toast" id="toast"></div>
+
+<!-- PAGE: REGISTRATION -->
+<div id="page-register" class="page active">
+  <div class="container">
+    <div class="page-header">
+      <h1>Patient Registration</h1>
+      <p>Register to receive your queue number</p>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label>Full name</label>
+        <input type="text" class="form-input" id="reg-name" placeholder="e.g. Ahmad bin Ali" maxlength="60" autocomplete="name"/>
+      </div>
+      <div class="form-group">
+        <label>IC number / Passport</label>
+        <input type="text" class="form-input" id="reg-ic" placeholder="e.g. 901231-14-5678" maxlength="20" inputmode="numeric"/>
+      </div>
+      <div class="form-group">
+        <label>Phone number</label>
+        <input type="tel" class="form-input" id="reg-phone" placeholder="e.g. 011-1234 5678" maxlength="20" inputmode="tel"/>
+      </div>
+      <div class="form-group">
+        <label>Reason for visit</label>
+        <select class="form-select" id="reg-reason">
+          <option value="">-- Select reason --</option>
+          <option>General checkup</option>
+          <option>Fever / flu</option>
+          <option>Cough / sore throat</option>
+          <option>Stomach pain</option>
+          <option>Headache / dizziness</option>
+          <option>High blood pressure</option>
+          <option>Diabetes follow-up</option>
+          <option>Injury / wound</option>
+          <option>Collect medication</option>
+          <option>Medical certificate (MC)</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group" id="reg-other-group" style="display:none;">
+        <label>Please describe</label>
+        <input type="text" class="form-input" id="reg-other" placeholder="Describe your reason" maxlength="80"/>
+      </div>
+      <button class="btn-primary" onclick="registerPatient()">Get Queue Number</button>
+    </div>
+    <div class="footer">Powered by <a href="https://bloomqr.my" target="_blank">BloomQR</a> &copy; 2026</div>
+  </div>
+</div>
+
+<!-- PAGE: QUEUE STATUS -->
+<div id="page-queue" class="page">
+  <div class="container">
+    <div class="page-header">
+      <h1>Queue Status</h1>
+      <p>Live updates — refreshes automatically</p>
+    </div>
+    <div id="my-ticket"></div>
+    <div class="queue-board" id="queue-board"></div>
+    <div class="footer">Powered by <a href="https://bloomqr.my" target="_blank">BloomQR</a> &copy; 2026</div>
+  </div>
+</div>
+
+<!-- PAGE: STAFF -->
+<div id="page-staff" class="page">
+  <div class="container">
+    <div id="staff-content"></div>
+    <div class="footer">Powered by <a href="https://bloomqr.my" target="_blank">BloomQR</a> &copy; 2026</div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────
+// HELPERS (top — must be first)
+// ─────────────────────────────────────
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+let toastTimer;
+function toast(msg,dur=2800){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),dur);
+}
+
+// ─────────────────────────────────────
+// FIREBASE CONFIG
+// ─────────────────────────────────────
+const DB_URL='https://qr-code-based-1fb2f-default-rtdb.firebaseio.com';
+const urlParams=new URLSearchParams(window.location.search);
+const CLINIC_ID=(urlParams.get('clinic')||'').trim();
+const CLINIC_PATH='clinics/'+CLINIC_ID;
+const ADMIN_PARAM=(urlParams.get('admin')||'').trim();
+const ADMIN_PASS='bloomqr-admin-2026';
+
+let db=true; // flag
+let clinicInfo={};
+let allPatients=[];
+let myQueueKey=null;
+let knownKeys=new Set();
+let isFirstLoad=true;
+let STAFF_PIN='1234';
+const STAFF_KEY='bloomqr_clinic_staff_'+CLINIC_ID;
+
+// Firebase REST helpers
+async function fbGet(path){
+  const r=await fetch(DB_URL+'/'+path+'.json');
+  return r.ok?await r.json():null;
+}
+async function fbSet(path,data){
+  const r=await fetch(DB_URL+'/'+path+'.json',{method:'PUT',body:JSON.stringify(data)});
+  return r.ok?await r.json():null;
+}
+async function fbPush(path,data){
+  const r=await fetch(DB_URL+'/'+path+'.json',{method:'POST',body:JSON.stringify(data)});
+  return r.ok?await r.json():null;
+}
+async function fbUpdate(path,data){
+  const r=await fetch(DB_URL+'/'+path+'.json',{method:'PATCH',body:JSON.stringify(data)});
+  return r.ok?await r.json():null;
+}
+async function fbTransaction(path,updateFn){
+  const cur=await fbGet(path);
+  const next=updateFn(cur);
+  await fbSet(path,next);
+  return next;
+}
+
+// ─────────────────────────────────────
+// POLLING (every 3 seconds)
+// ─────────────────────────────────────
+let pollTimer=null;
+async function pollData(){
+  const snap=await fbGet(CLINIC_PATH+'/patients');
+  const newPatients=[];
+  if(snap){Object.entries(snap).forEach(([k,v])=>newPatients.push({_key:k,...v}));}
+  newPatients.sort((a,b)=>a.queueNum-b.queueNum);
+
+  // Detect new registrations (for staff alert)
+  if(!isFirstLoad){
+    newPatients.forEach(p=>{
+      if(!knownKeys.has(p._key)&&p.status==='waiting'){
+        playNewPatientSound();
+        showNewPatientBanner(p);
+      }
+    });
+  }
+  newPatients.forEach(p=>knownKeys.add(p._key));
+  isFirstLoad=false;
+
+  allPatients=newPatients;
+  renderQueueBoard();
+  renderMyTicket();
+  renderStaffContent();
+}
+
+function startPolling(){
+  pollData();
+  pollTimer=setInterval(pollData,3000);
+}
+
+// ─────────────────────────────────────
+// INIT
+// ─────────────────────────────────────
+async function init(){
+  if(ADMIN_PARAM){showAdminPanel();return;}
+  if(!CLINIC_ID){showLandingPage();return;}
+
+  const info=await fbGet(CLINIC_PATH+'/info');
+  if(!info){
+    document.body.innerHTML='<div class="fullscreen-msg"><div class="fullscreen-msg-inner"><div class="icon">❌</div><h1>Clinic not found</h1><p>This link is invalid. Please scan the correct QR code.</p></div></div>';
+    return;
+  }
+  if(info.active===false){showClosedPage('This clinic is temporarily unavailable.','Please approach the counter for assistance.');return;}
+
+  // Opening hours check
+  if(info.openTime&&info.closeTime){
+    const now=new Date();
+    const nowMins=now.getHours()*60+now.getMinutes();
+    function parseMins(str){const m=str.match(/^(\d{1,2}):(\d{2})/);return m?parseInt(m[1])*60+parseInt(m[2]):null;}
+    const o=parseMins(info.openTime),cl=parseMins(info.closeTime);
+    if(o!==null&&cl!==null){
+      const closed=o<=cl?(nowMins<o||nowMins>=cl):(nowMins<o&&nowMins>=cl);
+      if(closed){
+        function fmt(m){const h=Math.floor(m/60)%24,mn=m%60,ap=h>=12?'PM':'AM',h12=h%12||12;return h12+':'+(mn<10?'0':'')+mn+' '+ap;}
+        showClosedPage('We are closed right now','Operating hours: '+fmt(o)+' – '+fmt(cl));
+        return;
+      }
+    }
+  }
+
+  clinicInfo=info;
+  STAFF_PIN=String(info.pin||'1234');
+  document.title=(info.name||'BloomQR Clinic')+' — Queue';
+  document.getElementById('nav-brand-main').textContent='🏥 '+(info.name||'BloomQR Clinic');
+  applyBranding(info);
+  startPolling();
+
+  // Auto-seed queue counter
+  const ctr=await fbGet(CLINIC_PATH+'/queueCounter');
+  if(ctr===null)await fbSet(CLINIC_PATH+'/queueCounter',0);
+}
+
+function applyBranding(info){
+  if(info.color){
+    document.documentElement.style.setProperty('--accent',info.color);
+    document.documentElement.style.setProperty('--accent-light',info.color+'22');
+  }
+  if(info.logo){
+    const el=document.getElementById('nav-brand-main');
+    el.innerHTML=`<img src="${info.logo}"/> ${escHtml(info.name||'BloomQR Clinic')}`;
+  }
+}
+
+// ─────────────────────────────────────
+// PAGE NAVIGATION
+// ─────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const map={'page-register':'nav-register','page-queue':'nav-queue','page-staff':'nav-staff'};
+  if(map[id])document.getElementById(map[id]).classList.add('active');
+  if(id==='page-staff')checkStaffAccess();
+}
+
+// ─────────────────────────────────────
+// REGISTRATION
+// ─────────────────────────────────────
+document.getElementById('reg-reason').addEventListener('change',function(){
+  document.getElementById('reg-other-group').style.display=this.value==='Other'?'block':'none';
+});
+
+async function registerPatient(){
+  const name=document.getElementById('reg-name').value.trim();
+  const ic=document.getElementById('reg-ic').value.trim();
+  const phone=document.getElementById('reg-phone').value.trim();
+  const reason=document.getElementById('reg-reason').value;
+  const other=document.getElementById('reg-other').value.trim();
+
+  // Validate
+  let hasError=false;
+  ['reg-name','reg-ic','reg-reason'].forEach(id=>{
+    const el=document.getElementById(id);
+    const val=el.value.trim();
+    if(!val){el.classList.add('error');hasError=true;}
+    else el.classList.remove('error');
+  });
+  if(hasError){toast('Please fill in all required fields');return;}
+  if(reason==='Other'&&!other){toast('Please describe your reason');return;}
+
+  const btn=document.querySelector('#page-register .btn-primary');
+  btn.textContent='Registering...';btn.disabled=true;
+
+  try{
+    // Increment queue counter atomically
+    const queueNum=await fbTransaction(CLINIC_PATH+'/queueCounter',cur=>(cur||0)+1);
+
+    const patientData={
+      queueNum,
+      name,
+      ic:ic.replace(/[\s-]/g,''),
+      phone:phone||'',
+      reason:reason==='Other'?other:reason,
+      status:'waiting',
+      registeredAt:Date.now(),
+      registeredTime:new Date().toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'}),
+    };
+
+    const res=await fbPush(CLINIC_PATH+'/patients',patientData);
+    myQueueKey=res.name;
+
+    // Clear form
+    document.getElementById('reg-name').value='';
+    document.getElementById('reg-ic').value='';
+    document.getElementById('reg-phone').value='';
+    document.getElementById('reg-reason').value='';
+    document.getElementById('reg-other').value='';
+    document.getElementById('reg-other-group').style.display='none';
+
+    toast('✓ Registered! Queue #'+queueNum);
+    await pollData();
+    showPage('page-queue');
+  }catch(e){
+    toast('Error — please try again');
+    console.error(e);
+  }finally{
+    btn.textContent='Get Queue Number';btn.disabled=false;
+  }
+}
+
+// ─────────────────────────────────────
+// QUEUE BOARD (patient view)
+// ─────────────────────────────────────
+function renderMyTicket(){
+  const el=document.getElementById('my-ticket');
+  if(!myQueueKey){el.innerHTML='';return;}
+  const me=allPatients.find(p=>p._key===myQueueKey);
+  if(!me){el.innerHTML='';return;}
+
+  const statusMap={
+    waiting:{label:'Waiting — please be seated',cls:'waiting'},
+    calling:{label:'Your turn! Please proceed to the counter',cls:'calling'},
+    done:{label:'Consultation complete',cls:'done'},
+  };
+  const s=statusMap[me.status]||statusMap.waiting;
+  const waitingAhead=allPatients.filter(p=>p.status==='waiting'&&p.queueNum<me.queueNum).length;
+
+  // Sound if calling
+  if(me.status==='calling'&&!el.dataset.calledFor){
+    el.dataset.calledFor=myQueueKey;
+    playCallingSound();
+    if('Notification'in window&&Notification.permission==='granted'){
+      new Notification('Your turn! 🏥',{body:'Queue #'+me.queueNum+' — please proceed to the counter.'});
+    }
+  }
+
+  el.innerHTML=`
+    <div class="ticket">
+      <div class="ticket-clinic">${escHtml(clinicInfo.name||'BloomQR Clinic')}</div>
+      <div class="ticket-num">${me.queueNum}</div>
+      <div class="ticket-label">Your queue number</div>
+      <div class="ticket-name">${escHtml(me.name)}</div>
+      <div class="ticket-detail">${escHtml(me.reason)} · ${me.registeredTime}</div>
+      <div class="status-pill ${s.cls}"><span class="status-dot"></span>${s.label}</div>
+      ${me.status==='waiting'&&waitingAhead>0?`<div style="font-size:12px;color:var(--muted);margin-top:8px;">${waitingAhead} patient${waitingAhead>1?'s':''} ahead of you</div>`:''}
+    </div>`;
+}
+
+function renderQueueBoard(){
+  const el=document.getElementById('queue-board');
+  const calling=allPatients.filter(p=>p.status==='calling');
+  const waiting=allPatients.filter(p=>p.status==='waiting');
+  const done=allPatients.filter(p=>p.status==='done').slice(-3);
+
+  let html='';
+  if(calling.length){
+    html+=`<div class="queue-section-title">Now serving</div>`;
+    calling.forEach(p=>{html+=patientRowHtml(p,'calling');});
+  }
+  if(waiting.length){
+    html+=`<div class="queue-section-title">Waiting (${waiting.length})</div>`;
+    waiting.forEach(p=>{html+=patientRowHtml(p,'waiting');});
+  }
+  if(done.length){
+    html+=`<div class="queue-section-title">Recently done</div>`;
+    done.reverse().forEach(p=>{html+=patientRowHtml(p,'done');});
+  }
+  if(!calling.length&&!waiting.length){
+    html='<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">No patients in queue right now.</div>';
+  }
+  el.innerHTML=html;
+}
+
+function patientRowHtml(p,status){
+  const badgeMap={waiting:'badge-waiting',calling:'badge-calling',done:'badge-done'};
+  const labelMap={waiting:'Waiting',calling:'Called',done:'Done'};
+  return `<div class="queue-row">
+    <div class="queue-num">#${p.queueNum}</div>
+    <div class="queue-info">
+      <div class="queue-patient">${escHtml(p.name)}</div>
+      <div class="queue-meta">${escHtml(p.reason)} · ${p.registeredTime}</div>
+    </div>
+    <div class="queue-badge ${badgeMap[status]}">${labelMap[status]}</div>
+  </div>`;
+}
+
+// ─────────────────────────────────────
+// STAFF VIEW
+// ─────────────────────────────────────
+function checkStaffAccess(){
+  if(sessionStorage.getItem(STAFF_KEY)==='yes'){renderStaffContent();return;}
+  const pin=prompt('Enter staff PIN:');
+  if(pin===null){showPage('page-register');return;}
+  if(pin.trim()===STAFF_PIN){
+    sessionStorage.setItem(STAFF_KEY,'yes');
+    renderStaffContent();
+    toast('Staff access unlocked');
+  }else{
+    toast('Incorrect PIN');
+    showPage('page-register');
+  }
+}
+
+function renderStaffContent(){
+  if(sessionStorage.getItem(STAFF_KEY)!=='yes')return;
+  const el=document.getElementById('staff-content');
+  if(!el)return;
+
+  const waiting=allPatients.filter(p=>p.status==='waiting');
+  const calling=allPatients.filter(p=>p.status==='calling');
+  const done=allPatients.filter(p=>p.status==='done');
+  const current=calling[0]||null;
+
+  el.innerHTML=`
+    <div class="staff-header">
+      <h2>Staff Panel</h2>
+      <button onclick="callNext()" class="btn-primary" style="width:auto;padding:10px 20px;font-size:14px;"${!waiting.length?'disabled':''}>
+        Call next patient
+      </button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val">${waiting.length}</div><div class="stat-label">Waiting</div></div>
+      <div class="stat-card"><div class="stat-val">${calling.length}</div><div class="stat-label">Calling</div></div>
+      <div class="stat-card"><div class="stat-val">${done.length}</div><div class="stat-label">Done today</div></div>
+    </div>
+
+    ${current?`
+    <div class="now-serving">
+      <div class="now-serving-label">Now serving</div>
+      <div class="now-serving-num">#${current.queueNum}</div>
+      <div class="now-serving-name">${escHtml(current.name)}</div>
+      <div class="now-serving-reason">${escHtml(current.reason)}</div>
+      <div style="font-size:12px;opacity:0.7;margin-top:4px;">IC: ${escHtml(current.ic||'—')} · ${escHtml(current.phone||'—')}</div>
+      <div class="action-row">
+        <button class="action-btn btn-done" onclick="markDone('${current._key}')">✓ Mark done</button>
+        <button class="action-btn btn-next" onclick="callNext()">Skip → Next</button>
+      </div>
+    </div>`
+    :'<div class="card" style="text-align:center;color:var(--muted);padding:28px;">No patient currently being served.<br/>Tap "Call next patient" to begin.</div>'}
+
+    <div class="waiting-list">
+      <div class="queue-section-title">Waiting queue (${waiting.length})</div>
+      ${waiting.length?waiting.map(p=>`
+        <div class="queue-row">
+          <div class="queue-num">#${p.queueNum}</div>
+          <div class="queue-info">
+            <div class="queue-patient">${escHtml(p.name)}</div>
+            <div class="queue-meta">${escHtml(p.reason)} · ${p.registeredTime}</div>
+          </div>
+        </div>`).join('')
+      :'<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">No patients waiting.</div>'}
+    </div>
+
+    <div style="margin-top:16px;">
+      <div class="queue-section-title">Completed today (${done.length})</div>
+      ${done.slice().reverse().slice(0,5).map(p=>`
+        <div class="queue-row" style="opacity:0.6;">
+          <div class="queue-num" style="color:var(--green);">#${p.queueNum}</div>
+          <div class="queue-info">
+            <div class="queue-patient">${escHtml(p.name)}</div>
+            <div class="queue-meta">${escHtml(p.reason)} · ${p.registeredTime}</div>
+          </div>
+          <div class="queue-badge badge-done">Done</div>
+        </div>`).join('')||'<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">None yet.</div>'}
+    </div>`;
+}
+
+async function callNext(){
+  if(sessionStorage.getItem(STAFF_KEY)!=='yes')return;
+  const waiting=allPatients.filter(p=>p.status==='waiting');
+  if(!waiting.length){toast('No patients waiting');return;}
+
+  // Mark any currently calling as done first
+  const calling=allPatients.filter(p=>p.status==='calling');
+  for(const p of calling){
+    await fbUpdate(CLINIC_PATH+'/patients/'+p._key,{status:'done',doneAt:Date.now()});
+  }
+
+  // Call next
+  const next=waiting[0];
+  await fbUpdate(CLINIC_PATH+'/patients/'+next._key,{status:'calling',calledAt:Date.now()});
+  await pollData();
+  toast('Calling #'+next.queueNum+' — '+next.name);
+}
+
+async function markDone(key){
+  if(sessionStorage.getItem(STAFF_KEY)!=='yes')return;
+  await fbUpdate(CLINIC_PATH+'/patients/'+key,{status:'done',doneAt:Date.now()});
+  await pollData();
+  toast('✓ Marked done');
+}
+
+// ─────────────────────────────────────
+// AUDIO
+// ─────────────────────────────────────
+let audioCtx=null;
+function getAudioCtx(){
+  if(!audioCtx||audioCtx.state==='closed')audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+async function resumeAndPlay(fn){
+  try{const ctx=getAudioCtx();if(ctx.state==='suspended')await ctx.resume();if(ctx.state==='running')fn(ctx);}catch(e){}
+}
+['click','touchstart','keydown'].forEach(ev=>{
+  document.addEventListener(ev,()=>{try{if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();}catch(e){}});
+});
+
+function playNewPatientSound(){
+  resumeAndPlay(ctx=>{
+    [[0,660],[0.15,880]].forEach(([d,f])=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0,ctx.currentTime+d);
+      g.gain.linearRampToValueAtTime(0.35,ctx.currentTime+d+0.01);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d+0.4);
+      o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+0.4);
+    });
+  });
+}
+
+function playCallingSound(){
+  resumeAndPlay(ctx=>{
+    [[0,523],[0.18,659],[0.36,784]].forEach(([d,f])=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0,ctx.currentTime+d);
+      g.gain.linearRampToValueAtTime(0.4,ctx.currentTime+d+0.01);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d+0.5);
+      o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+0.5);
+    });
+  });
+}
+
+// ─────────────────────────────────────
+// NEW PATIENT BANNER (for staff)
+// ─────────────────────────────────────
+let bannerTimer=null;
+function showNewPatientBanner(patient){
+  const b=document.getElementById('new-patient-banner');
+  b.innerHTML='🔔 New patient: <strong>#'+patient.queueNum+' '+escHtml(patient.name)+'</strong> — '+escHtml(patient.reason)+' <button onclick="showPage(\'page-staff\')" style="margin-left:8px;padding:4px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">View</button>';
+  b.style.display='flex';
+  clearTimeout(bannerTimer);
+  bannerTimer=setTimeout(()=>{b.style.display='none';},7000);
+}
+
+// ─────────────────────────────────────
+// LANDING PAGE (no ?clinic= param)
+// ─────────────────────────────────────
+function showLandingPage(){
+  document.querySelector('.nav').style.display='none';
+  document.getElementById('page-register').innerHTML=`
+    <div class="landing">
+      <div class="landing-inner">
+        <div class="landing-icon">🏥</div>
+        <h1>BloomQR Clinic</h1>
+        <p>Digital queue management for clinics and medical centres.</p>
+        <input class="landing-input" type="text" id="lp-name" placeholder="Clinic name" maxlength="60"/>
+        <input class="landing-input" type="text" id="lp-pin" placeholder="Set a staff PIN (4-6 digits)" maxlength="6" inputmode="numeric"/>
+        <button class="btn-primary" onclick="createClinic()">Set up my clinic</button>
+      </div>
+    </div>`;
+  document.getElementById('page-register').classList.add('active');
+}
+
+async function createClinic(){
+  const name=document.getElementById('lp-name').value.trim();
+  const pin=document.getElementById('lp-pin').value.trim();
+  if(!name){toast('Please enter a clinic name');return;}
+  if(!/^\d{4,6}$/.test(pin)){toast('PIN must be 4-6 digits');return;}
+  const id='clinic'+Math.random().toString(36).slice(2,8);
+  await fbSet('clinics/'+id+'/info',{name,pin,active:true,createdAt:Date.now()});
+  await fbSet('clinics/'+id+'/queueCounter',0);
+  const link=window.location.origin+window.location.pathname+'?clinic='+id;
+  document.querySelector('.landing-inner').innerHTML=`
+    <div class="landing-icon">✅</div>
+    <h1>Clinic created!</h1>
+    <p>Your clinic link:</p>
+    <div style="background:#f4f6f9;padding:12px;border-radius:8px;font-size:13px;word-break:break-all;margin-bottom:16px;">${link}</div>
+    <button class="btn-primary" onclick="window.location='${link}'">Open my clinic</button>`;
+}
+
+// ─────────────────────────────────────
+// CLOSED / INACTIVE PAGES
+// ─────────────────────────────────────
+function showClosedPage(title,msg){
+  document.body.innerHTML=`<div class="fullscreen-msg"><div class="fullscreen-msg-inner"><div class="icon">🕐</div><h1>${escHtml(title)}</h1><p>${escHtml(msg)}</p></div></div>`;
+}
+
+// ─────────────────────────────────────
+// ADMIN PANEL
+// ─────────────────────────────────────
+async function showAdminPanel(){
+  if(ADMIN_PARAM!==ADMIN_PASS){document.body.innerHTML='<div class="fullscreen-msg"><div class="fullscreen-msg-inner"><h1>Access denied</h1></div></div>';return;}
+  document.querySelector('.nav').style.display='none';
+  document.getElementById('page-register').classList.add('active');
+
+  const allClinics=await fbGet('clinics')||{};
+  const rows=Object.entries(allClinics).map(([id,clinic])=>{
+    const info=clinic.info||{};
+    const patients=clinic.patients?Object.values(clinic.patients):[];
+    const today=new Date().toDateString();
+    const todayCount=patients.filter(p=>new Date(p.registeredAt).toDateString()===today).length;
+    const expiry=info.expiryDate||'';
+    const isExpired=expiry&&new Date(expiry)<new Date();
+    const link=window.location.origin+window.location.pathname+'?clinic='+id;
+    return `<div class="admin-stall-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="admin-stall-name">🏥 ${escHtml(info.name||'Unnamed Clinic')}</div>
+          <div class="admin-stall-meta">ID: <code>${id}</code> · PIN: <strong>${info.pin||'—'}</strong></div>
+          <div class="admin-stall-meta" style="margin-top:2px;">📞 ${info.phone||'—'} &nbsp; 📧 ${info.email||'—'}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span class="admin-tag tag-clinic">Clinic</span>
+          <span class="admin-tag ${info.active!==false?'tag-active':'tag-inactive'}">${info.active!==false?'Active':'Inactive'}</span>
+          ${isExpired?'<span class="admin-tag tag-expired">Expired</span>':''}
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px;">
+        ${todayCount} patients today · Created ${info.createdAt?new Date(info.createdAt).toLocaleDateString():'—'}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <label style="font-size:12px;color:var(--muted);">Subscription expires:</label>
+        <input type="date" value="${expiry}" onchange="saveClinicExpiry('${id}',this.value)" style="font-size:12px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;"/>
+        <button onclick="toggleClinicActive('${id}',${info.active!==false})" style="padding:4px 12px;font-size:12px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:inherit;background:#fff;">${info.active!==false?'Deactivate':'Activate'}</button>
+      </div>
+      <div style="margin-top:8px;font-size:12px;"><a href="${link}" target="_blank" style="color:var(--accent);">Open clinic →</a></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('page-register').innerHTML=`
+    <div class="container" style="max-width:700px;">
+      <div style="padding:24px 0 16px;display:flex;justify-content:space-between;align-items:center;">
+        <h1 style="font-family:'Space Grotesk',sans-serif;font-size:22px;">BloomQR Admin — Clinics</h1>
+        <span style="font-size:13px;color:var(--muted);">${Object.keys(allClinics).length} clinics</span>
+      </div>
+      ${rows||'<div style="color:var(--muted);text-align:center;padding:40px;">No clinics yet.</div>'}
+    </div>`;
+}
+
+window.saveClinicExpiry=async(id,date)=>{
+  await fbUpdate('clinics/'+id+'/info',{expiryDate:date});
+  toast('Expiry saved');
+};
+window.toggleClinicActive=async(id,cur)=>{
+  await fbUpdate('clinics/'+id+'/info',{active:!cur});
+  toast(cur?'Clinic deactivated':'Clinic activated');
+  showAdminPanel();
+};
+
+// ─────────────────────────────────────
+// START
+// ─────────────────────────────────────
+init();
+</script>
+</body>
+</html>
